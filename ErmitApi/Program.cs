@@ -1,5 +1,4 @@
 
-
 using ErmitApi;
 using ErmitApi.DAL;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,6 +13,9 @@ using NLog.Web;
 using Npgsql;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.Rewrite;
+using ErmitApi.BLL;
 
 
 try
@@ -165,29 +167,82 @@ try
 
     #endregion
 
+    #region Services
+
+    // настраиваем опции конфигурации приложения
+
+    // регистрируем сервисы
+    builder.Services.AddSingleton<AuthService>();
+    builder.Services.AddTransient<PlayService>();
+    builder.Services.AddTransient<HallService>();
+    builder.Services.AddTransient<SessionService>();
+    builder.Services.AddTransient<TicketService>();
+
+    // добавляем hhtp-логгирование
+    builder.Services.AddHttpLogging(options =>
+    {
+        options.LoggingFields = HttpLoggingFields.RequestHeaders |
+                                HttpLoggingFields.RequestBody |
+                                HttpLoggingFields.ResponseHeaders |
+                                HttpLoggingFields.ResponseBody;
+    });
+
+    builder.Services.AddControllersWithViews(); // Добавление служб для работы с контроллерами и представлениями
+    #endregion
 
 
-    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    #region CORS
+    // добавляем поддержку CORS
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowSpecificOrigin",
+            builder =>
+            {
+                builder.WithOrigins("http://*")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+            });
+    });
+    #endregion
 
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("enable_swagger"))
     {
+        app.UseDeveloperExceptionPage();
+
         app.UseSwagger();
-        app.UseSwaggerUI();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("../swagger/v1.0/swagger.json", "v1.0");
+        });
+
+        // новый объект ReriteOptions
+        RewriteOptions redirections = new();
+        // добавляем правило перенаправления
+        redirections.AddRedirect("^$", "swagger");
+        // использовать заданные правила перенаправления
+        app.UseRewriter(redirections);
     }
 
     app.UseHttpsRedirection();
+    app.UseRouting();
 
+    app.UseCors("AllowSpecificOrigin");
+
+    app.UseAuthentication();
     app.UseAuthorization();
 
-    app.MapControllers();
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+    });
 
-    app.Run();
 
+    await app.RunAsync();
 }
 finally
 {
