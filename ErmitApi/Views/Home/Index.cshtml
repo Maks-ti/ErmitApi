@@ -1,0 +1,111 @@
+﻿@page
+@model ErmitApi.Views.Home.IndexModel
+@{
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Location Page</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+	<style>
+		body {
+			font-family: 'Arial', sans-serif;
+			margin: 0;
+			padding: 0;
+			background-color: #a7c7e7; /* Светло-голубой пастельный фон */
+			color: #333;
+		}
+
+		.container {
+			background-color: white; /* Фон для контента */
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		}
+		/* Остальные стили */
+	</style>
+</head>
+<body>
+	<div class="container mt-4" id="locations-container"></div>
+
+
+	<script type="text/javascript">
+
+		function convertToImage(binaryData, extension) {
+			let mimeType;
+			switch (extension) {
+				case '.png':
+					mimeType = 'image/png';
+					break;
+				case '.jpg':
+				case '.jpeg':
+					mimeType = 'image/jpeg';
+					break;
+				// Добавьте другие форматы по необходимости
+				default:
+					mimeType = 'image/png';
+			}
+			// Поскольку binaryData уже в Base64, просто возвращаем Data URL
+			return `data:${mimeType};base64,${binaryData}`;
+		}
+
+
+		function displayLocations(location) {
+			let container = document.getElementById('locations-container');
+			let htmlContent = `<div class="card mb-3">
+								   <div class="card-body">
+									   <h2 class="card-title">${location.name}</h2>
+									   <p class="card-text">${location.description}</p>
+									   <img src="${convertToImage(location.pictureData, location.extension)}" class="card-img-top" alt="${location.name}">
+								   </div>
+							   </div>`;
+
+			htmlContent += `<h3>Достопримечательности на локации:</h3>`
+
+			htmlContent += '<div class="row">';
+			location.showplaces.forEach(showplace => {
+				htmlContent += `<div class="col-md-4 mb-3">
+								  <div class="card">
+									  <img src="${convertToImage(showplace.pictureData, showplace.extension)}" class="card-img-top" alt="${showplace.name}">
+									  <div class="card-body">
+										  <h5 class="card-title">${showplace.name}</h5>
+										  <p class="card-text">${showplace.description}</p>
+										  <p class="card-text"><small class="text-muted">${showplace.address}</small></p>
+									  </div>
+								  </div>
+								</div>`;
+			});
+			htmlContent += '</div>';
+
+			container.innerHTML = htmlContent;
+		}
+
+
+
+		// получаем параметры (из запроса страницы)
+		let params = new URLSearchParams(window.location.search);
+		let id = params.get('id'); // '1234'
+
+		let url = `http://localhost:5000/api/Location/GetByStandId?id=${id}`;
+
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response.json(); // Преобразование ответа в JSON
+			})
+			.then(data => {
+				console.log(data); // Теперь 'data' - это объект JavaScript, полученный из JSON ответа
+				// Вы можете работать с этим объектом, как требуется
+
+				displayLocations(data);
+			})
+			.catch(error => {
+				console.error('There was a problem with the fetch operation:', error);
+			});
+
+	</script>
+</body>
+</html>

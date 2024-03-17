@@ -2,7 +2,8 @@
 using ErmitApi.Models;
 using ErmitApi.BLL;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ErmitApi.Controllers;
 
@@ -67,6 +68,7 @@ public class LocationController : ApiControllerBase
     }
 
     [HttpPost("[action]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> Create([FromForm] LocationCreateModel model)
     {
         try
@@ -83,6 +85,7 @@ public class LocationController : ApiControllerBase
     }
 
     [HttpPut("[action]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> Update([FromForm] LocationUpdateModel model)
     {
         try
@@ -99,6 +102,7 @@ public class LocationController : ApiControllerBase
     }
 
     [HttpDelete("[action]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<IActionResult> Delete(int id)
     {
         try

@@ -197,6 +197,10 @@ try
 
     #endregion
 
+    #region Behavior
+    builder.Services.AddMvcCore();
+    #endregion
+
     #region Services
 
     // настраиваем опции конфигурации приложения

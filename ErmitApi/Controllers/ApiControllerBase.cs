@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ErmitApi.Controllers;
 
 
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+// [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public abstract class ApiControllerBase : ControllerBase
 {
     protected IServiceProvider _serviceProvider { get; }
