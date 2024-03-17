@@ -3,18 +3,19 @@ using ErmitApi.Models;
 using ErmitApi.BLL;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace ErmitApi.Controllers;
 
 
 [ApiController]
 [Route("api/[controller]")]
-public class AchievementController : ApiControllerBase
+public class LocationController : ApiControllerBase
 {
-    private AchievementService AchievementService { get; set; }
-    public AchievementController(IServiceProvider serviceProvider, ILogger<AchievementController> logger, AchievementService service)
+    private LocationService LocationService { get; set; }
+    public LocationController(IServiceProvider serviceProvider, ILogger<LocationController> logger, LocationService service)
         : base(serviceProvider, logger)
     {
-        AchievementService = service;
+        LocationService = service;
     }
 
     [HttpGet("[action]")]
@@ -22,7 +23,7 @@ public class AchievementController : ApiControllerBase
     {
         try
         {
-            var result = await AchievementService.GetAllAsync();
+            var result = await LocationService.GetAllAsync();
 
             return Ok(result);
         }
@@ -38,7 +39,23 @@ public class AchievementController : ApiControllerBase
     {
         try
         {
-            var result = await AchievementService.GetByIdAsync(id);
+            var result = await LocationService.GetByIdAsync(id);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            return StatusCode(500);
+        }
+    }
+
+    [HttpGet("[action]")]
+    public async Task<IActionResult> GetByStandId ([FromQuery] int id)
+    {
+        try
+        {
+            var result = await LocationService.GetByStandIdAsync(id);
 
             return Ok(result);
         }
@@ -50,11 +67,11 @@ public class AchievementController : ApiControllerBase
     }
 
     [HttpPost("[action]")]
-    public async Task<IActionResult> Create([FromForm] AchievementCreateModel model)
+    public async Task<IActionResult> Create([FromForm] LocationCreateModel model)
     {
         try
         {
-            var result = await AchievementService.CreateAsync(model);
+            var result = await LocationService.CreateAsync(model);
 
             return Ok(result);
         }
@@ -66,11 +83,11 @@ public class AchievementController : ApiControllerBase
     }
 
     [HttpPut("[action]")]
-    public async Task<IActionResult> Update([FromForm] AchievementUpdateModel model)
+    public async Task<IActionResult> Update([FromForm] LocationUpdateModel model)
     {
         try
         {
-            var result = await AchievementService.UpdateAsync(model);
+            var result = await LocationService.UpdateAsync(model);
 
             return Ok(result);
         }
@@ -86,7 +103,7 @@ public class AchievementController : ApiControllerBase
     {
         try
         {
-            await AchievementService.DeleteByIdAsync(id);
+            await LocationService.DeleteByIdAsync(id);
 
             return NoContent();
         }

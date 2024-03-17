@@ -1,6 +1,7 @@
 ﻿
-using ErmitApi.Models;
+
 using ErmitApi.BLL;
+using ErmitApi.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ErmitApi.Controllers;
@@ -8,13 +9,13 @@ namespace ErmitApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AchievementController : ApiControllerBase
+public class StandController : ApiControllerBase
 {
-    private AchievementService AchievementService { get; set; }
-    public AchievementController(IServiceProvider serviceProvider, ILogger<AchievementController> logger, AchievementService service)
+    private StandService StandService { get; set; }
+    public StandController(IServiceProvider serviceProvider, ILogger<StandController> logger, StandService service)
         : base(serviceProvider, logger)
     {
-        AchievementService = service;
+        StandService = service;
     }
 
     [HttpGet("[action]")]
@@ -22,7 +23,7 @@ public class AchievementController : ApiControllerBase
     {
         try
         {
-            var result = await AchievementService.GetAllAsync();
+            var result = await StandService.GetAllAsync();
 
             return Ok(result);
         }
@@ -38,7 +39,7 @@ public class AchievementController : ApiControllerBase
     {
         try
         {
-            var result = await AchievementService.GetByIdAsync(id);
+            var result = await StandService.GetByIdAsync(id);
 
             return Ok(result);
         }
@@ -50,11 +51,11 @@ public class AchievementController : ApiControllerBase
     }
 
     [HttpPost("[action]")]
-    public async Task<IActionResult> Create([FromForm] AchievementCreateModel model)
+    public async Task<IActionResult> Create([FromBody] StandCreateModel model)
     {
         try
         {
-            var result = await AchievementService.CreateAsync(model);
+            var result = await StandService.CreateAsync(model);
 
             return Ok(result);
         }
@@ -66,11 +67,11 @@ public class AchievementController : ApiControllerBase
     }
 
     [HttpPut("[action]")]
-    public async Task<IActionResult> Update([FromForm] AchievementUpdateModel model)
+    public async Task<IActionResult> Update([FromBody] StandUpdateModel model)
     {
         try
         {
-            var result = await AchievementService.UpdateAsync(model);
+            var result = await StandService.UpdateAsync(model);
 
             return Ok(result);
         }
@@ -86,7 +87,7 @@ public class AchievementController : ApiControllerBase
     {
         try
         {
-            await AchievementService.DeleteByIdAsync(id);
+            await StandService.DeleteByIdAsync(id);
 
             return NoContent();
         }
@@ -99,3 +100,4 @@ public class AchievementController : ApiControllerBase
 
 
 }
+

@@ -33,12 +33,42 @@ try
 
     builder.Configuration.AddConfiguration(configuration); // регистрируем конфигурацию
 
+    #region Kestrel
+    // Определение портов на основе окружения
+    int httpPort, httpsPort;
+    if (builder.Environment.IsDevelopment())
+    {
+        httpPort = builder.Configuration.GetValue<int>("Kestrel:Development:HttpPort");
+        httpsPort = builder.Configuration.GetValue<int>("Kestrel:Development:HttpsPort");
+    }
+    else
+    {
+        httpPort = builder.Configuration.GetValue<int>("Kestrel:Production:HttpPort");
+        httpsPort = builder.Configuration.GetValue<int>("Kestrel:Production:HttpsPort");
+    }
+
+    // Настройка Kestrel
+    bool successParseBodySize = int.TryParse(configuration["MaxRequestBodySize"], out int maxRequestBodySize); // парсим значение из конфигурации
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        int size = (successParseBodySize) ? maxRequestBodySize : 30;
+        // устанавливаем лимит на тело запроса
+        options.Limits.MaxRequestBodySize = size * 1024 * 1024;
+
+        // настройка портов
+        options.ListenAnyIP(httpPort); // HTTP
+        // options.ListenAnyIP(httpsPort); // HTTPS
+    });
+    #endregion
+
     #region Logging
-    LayoutRenderer.Register<LayoutRendererWrapper>("intercept");
+    // LayoutRenderer.Register<LayoutRendererWrapper>("intercept");
     var logger = NLog.LogManager.Setup().LoadConfigurationFromAppSettings().GetCurrentClassLogger();
 
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
+
+    logger.Info("Логирование запущено");
     #endregion
 
     #region Controllers
@@ -155,7 +185,7 @@ try
     {
         var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
         var connectionString = configuration.GetConnectionString("Postgres");
-
+        
         options.UseLoggerFactory(loggerFactory)
                .UseNpgsql(connectionString, config => config.CommandTimeout(30));
 
@@ -172,11 +202,15 @@ try
     // настраиваем опции конфигурации приложения
 
     // регистрируем сервисы
-    builder.Services.AddSingleton<AuthService>();
-    builder.Services.AddTransient<PlayService>();
-    builder.Services.AddTransient<HallService>();
-    builder.Services.AddTransient<SessionService>();
-    builder.Services.AddTransient<TicketService>();
+    builder.Services.AddScoped<AuthService>();
+
+    builder.Services.AddTransient<AchievementService>();
+    builder.Services.AddTransient<LocationService>();
+    builder.Services.AddTransient<ShowplaceService>();
+    builder.Services.AddTransient<StandService>();
+    builder.Services.AddTransient<UserAchievementService>();
+    // builder.Services.AddTransient<>();
+    
 
     // добавляем hhtp-логгирование
     builder.Services.AddHttpLogging(options =>
@@ -189,7 +223,6 @@ try
 
     builder.Services.AddControllersWithViews(); // Добавление служб для работы с контроллерами и представлениями
     #endregion
-
 
     #region CORS
     // добавляем поддержку CORS
@@ -229,10 +262,13 @@ try
     app.UseHttpsRedirection();
     app.UseRouting();
 
+    app.UseHttpLogging();
     app.UseCors("AllowSpecificOrigin");
 
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.MapControllers();
 
     app.UseEndpoints(endpoints =>
     {
@@ -241,10 +277,26 @@ try
         pattern: "{controller=Home}/{action=Index}/{id?}");
     });
 
+    // app.UseErrorHandlingMiddleware();
+
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        app.Logger.LogInformation("Приложение запущено.");
+    });
+
+    app.Lifetime.ApplicationStopped.Register(() =>
+    {
+        app.Logger.LogInformation("Приложение остановлено.");
+    });
+
 
     await app.RunAsync();
 }
+catch (Exception ex)
+{
+    NLog.LogManager.GetCurrentClassLogger().Error(ex, "Ошибка при запуске приложения");
+}
 finally
 {
-    LogManager.Shutdown();
+    NLog.LogManager.Shutdown();
 }

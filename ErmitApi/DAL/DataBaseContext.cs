@@ -18,8 +18,11 @@ public class DataBaseContext : DbContext
 
     // список DbSet`ов
     public DbSet<User> Users { get; set; }
-    public DbSet<Achievement> Achives { get; set; }
+    public DbSet<Achievement> Achievements { get; set; }
     public DbSet<UserAchievement> UserAchievements { get; set; }
+    public DbSet<Location> Locations { get; set; }
+    public DbSet<Showplace> Showplaces { get; set; }
+    public DbSet<Stand> Stands { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
